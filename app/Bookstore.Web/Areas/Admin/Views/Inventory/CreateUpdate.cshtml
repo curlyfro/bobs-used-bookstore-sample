@@ -17,20 +17,20 @@
                 <label class="form-label" for="NameInput">Name</label>
                 <input id="NameInput" type="text" class="form-control" asp-for="Name" placeholder="Book name" />
                 <small><span asp-validation-for="Name" class="text-danger"></span></small>
-            </div>            
+            </div>
 
             <div class="mb-3">
                 <label class="form-label" for="AuthorInput">Author</label>
                 <input id="AuthorInput" type="text" class="form-control" asp-for="Author" placeholder="Author" />
                 <small><span asp-validation-for="Author" class="text-danger"></span></small>
             </div>
-            
+
             <div class="mb-3">
                 <label class="form-label" for="IsbnInput">ISBN</label>
                 <input id="IsbnInput" type="text" class="form-control" asp-for="ISBN" placeholder="ISBN" />
                 <small><span asp-validation-for="ISBN" class="text-danger"></span></small>
             </div>
-            
+
             <div class="row">
                 <div class="col">
                     <label class="form-label" for="PriceInput">Price</label>
@@ -106,7 +106,63 @@
                 <label class="form-label">Cover Image</label>
                 <input asp-for="CoverImage" class="form-control mb-3" accept=".png,.jpg,.jpeg">
                 <span asp-validation-for="CoverImage" class="text-danger"></span>
-                <img src="@Model.CoverImageUrl" class="img-thumbnail @(string.IsNullOrWhiteSpace(Model.CoverImageUrl) ? "d-none" : "")" />
+                <div class="row">
+                    <div class="col-3">
+                        <img src="@Model.CoverImageUrl" class="img-thumbnail @(string.IsNullOrWhiteSpace(Model.CoverImageUrl) ? "d-none" : "")" />
+                    </div>
+                    <div class="col-9">
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="useGenAICheckbox">
+                                <label class="form-check-label" id="lblUseGenAI" for="useGenAICheckbox">
+                                    Use GENAI to generate Cover Image
+                                </label>
+                            </div>
+                        </div>
+
+                        <div id="genAIContent" style="display:none">
+                            <div class="mb-3">
+                                <label class="form-label">Select Text Model for Summary</label>
+
+                                <div class="mb-3">
+                                    <select class="form-select" id="textFoundationModels" aria-label="Default select example">
+                                        <option selected>Select the model</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Select Image Model for Cover Image</label>
+
+                                <div class="mb-3">
+                                    <select class="form-select" id="imageFoundationModels" aria-label="Default select example">
+                                        <option selected>Select the model</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div id="numOfImages" class="mb-3" style="display:none">
+                                <label class="form-label">Number of Images</label>
+
+                                <div class="mb-3 col-1">
+                                    <input type="number" id="NumOfImagesInput" class="form-control" min="1" max="5" value="1" />
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label" for="PromptInput">Prompt</label>
+                                <textarea id="PromptInput" class="form-control" rows="6" placeholder="Prompt"></textarea>
+                            </div>
+
+                            <div class="d-flex justify-content-end">
+                                <button class="btn btn-warning" disabled id="generateImage">Generate Image</button>
+                            </div>
+
+                            <div id="imgResults" class="mb-3 d-flex justify-content-center">
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -119,18 +175,102 @@
     </div>
 </form>
 
-@section Scripts{
+@section Scripts {
     <script type="text/javascript">
-        $(function () {
-            $("input:file").change(function () {
+        let bedrockUrl = "/api/bedrock/";
+        let postHeaders =
+        {
+            'Content-Type': 'application/json',
+            "RequestVerificationToken": $("input[name='__RequestVerificationToken']").val()
+        };
+
+        let title = $("#NameInput").val().trim();
+        let genre = $("#GenreSelect option:selected").text().trim();
+
+        $(function ()
+        {
+            let textTemplate = `Title: "${title}"
+Genre: "${genre}"
+
+Based on the provided Title and Genre, generate an engaging short description of a book to sell on an online book store.
+Keep the length of the description to less than 900 characters.`;
+
+            let summary = $("#SummaryInput").text();
+            summary.length === 0
+                ? $("#lblUseGenAI").text("Use GENAI to generate Summary and Cover Image")
+                : $("#lblUseGenAI").text("Use GENAI to generate Cover Image");
+
+            $("#PromptInput").text(textTemplate);
+
+            let textFoundationModels = [];
+            let imageFoundationModels = [];
+
+            let isValidTextModelSelected = $("#textFoundationModels").find(":selected").index() > 0;
+            let isValidImageModelSelected = $("#imageFoundationModels").find(":selected").index() > 0;
+
+            let generateBtn = $('#generateImage');
+            let numImagesDiv = $('#numOfImages');
+
+            $("#useGenAICheckbox").change(function ()
+            {
+                if (imageFoundationModels.length === 0)
+                {
+                    listFoundationModels("IMAGE");
+                }
+
+                if (textFoundationModels.length === 0)
+                {
+                    listFoundationModels("TEXT");
+                }
+
+                this.checked
+                    ? $('#genAIContent').show()
+                    : $('#genAIContent').hide();
+            });
+
+            $("#textFoundationModels").change(function ()
+            {
+                isValidTextModelSelected = $(this).find(":selected").index() > 0;
+
+                isValidTextModelSelected && isValidImageModelSelected
+                    ? generateBtn.prop("disabled", false)
+                    : generateBtn.prop("disabled", true);
+            });
+
+            $("#imageFoundationModels").change(function ()
+            {
+                isValidImageModelSelected = $(this).find(":selected").index() > 0;
+
+                isValidTextModelSelected && isValidImageModelSelected
+                    ? generateBtn.prop("disabled", false)
+                    : generateBtn.prop("disabled", true);
+
+                $(this).val().includes("amazon")
+                    ? numImagesDiv.show()
+                    : numImagesDiv.hide();
+            });
+
+            $("#generateImage").click(function (e)
+            {
+                e.preventDefault();
+
+                summary.length === 0
+                    ? generateSummary()
+                    : generateImage();
+            });
+
+            $("input:file").change(function ()
+            {
                 readUrl(this);
             });
         });
 
-        function readUrl(input) {
+        function readUrl(input)
+        {
             var reader = new FileReader();
 
-            reader.onload = function (e) {
+            reader.onload = function (e)
+            {
                 $(input)
                     .next("img")
                     .attr("src", e.target.result)
@@ -139,7 +279,85 @@
 
             reader.readAsDataURL(input.files[0]);
         }
+
+        function listFoundationModels(modalityType)
+        {
+            let data = { inputModalities: modalityType.toUpperCase() };
+            var myArray = [];
+
+            $.getJSON(bedrockUrl, data, function (data)
+            {
+                let foundationModels = data;
+
+                $.each(data, function (key, value)
+                {
+                    $(`#${modalityType.toLowerCase()}FoundationModels`)
+                        .append($("<option></option>")
+                            .attr("value", value.modelId)
+                            .text(`${value.providerName} ${value.modelName} (${value.modelId})`));
+                });
+            });
+        }
+
+        function generateSummary()
+        {
+            let inputText = {};
+            inputText.modelId = $("#textFoundationModels option:selected").val();
+            inputText.prompt = $("#PromptInput").text();
+
+            $("#generateImage").text("Generating Summary...").prop("disabled", true);
+
+            $.ajax({
+                type: "POST",
+                headers: postHeaders,
+                url: bedrockUrl + "text",
+                data: JSON.stringify(inputText),
+                success: function (data)
+                {
+                    $("#SummaryInput").text(data.trim());
+                    generateImage();
+                }
+            });
+        }
+
+        function generateImage()
+        {
+            let summary = $("#SummaryInput").text();
+            let imageTemplate = `Using the following book description below, generate an engaging cover image for the book.  The title "${title}" should be prominently displayed at the top of the book cover in bold, sans-serif font. The font color should contrast with the background, making it easily readable:
+
+${summary}`;
+
+            let inputImage = {};
+            inputImage.modelId = $("#imageFoundationModels option:selected").val();
+            inputImage.numOfImages = $("#NumOfImagesInput").val();
+            inputImage.prompt = imageTemplate.substring(0, 1024);
+
+            $("#generateImage").text("Generating Cover Image(s)...").prop("disabled", true);
+
+            $.ajax({
+                type: "POST",
+                headers: postHeaders,
+                url: bedrockUrl + "image",
+                data: JSON.stringify(inputImage),
+                success: function (data)
+                {
+                    $('#imgResults').html('');
+                    $("#generateImage").text("Generate Image").prop("disabled", false);
+
+                    data.forEach((item) =>
+                    {
+                        var image = new Image();
+                        image.src = `data:image/png;base64,${item}`;
+                        image.classList = "img-thumbnail";
+
+                        $('#imgResults').append(image);
+                    });
+                },
+            });
+        }
     </script>
 
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 }

@@ -7,7 +7,10 @@
     <ItemGroup>
         <PackageReference Include="Amazon.Extensions.Configuration.SystemsManager" Version="2.1.0" />
         <PackageReference Include="AWS.Logger.AspNetCore" Version="3.3.0" />
+        <PackageReference Include="AWSSDK.Bedrock" Version="3.7.301.47" />
+        <PackageReference Include="AWSSDK.BedrockRuntime" Version="3.7.301.47" />
         <PackageReference Include="AWSSDK.CloudWatchLogs" Version="3.7.2.87" />
+        <PackageReference Include="LangChain.Providers.Amazon.Bedrock" Version="0.13.0" />
         <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="6.0.10" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="5.0.7" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="6.0.6" />
@@ -24,7 +27,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Controllers\" />
       <Folder Include="wwwroot\css\" />
       <Folder Include="wwwroot\lib\" />
     </ItemGroup>

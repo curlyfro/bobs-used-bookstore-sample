@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using Bookstore.Data.BedrockService;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Bookstore.Domain.Customers;
@@ -31,6 +32,7 @@ namespace Bookstore.Web.Startup
             builder.Services.AddTransient<IAddressService, AddressService>();
             builder.Services.AddTransient<IShoppingCartService, ShoppingCartService>();
             builder.Services.AddTransient<IImageResizeService, ImageResizeService>();
+            builder.Services.AddTransient<IBedrockService, BedrockService>();
 
             builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
             builder.Services.AddScoped<IAddressRepository, AddressRepository>();

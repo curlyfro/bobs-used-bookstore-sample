@@ -11,6 +11,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System.Text.Json;
 using System;
+using Amazon.Bedrock;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Authorization;
 
@@ -29,6 +30,7 @@ namespace Bookstore.Web.Startup
             builder.Services.AddDefaultAWSOptions(builder.Configuration.GetAWSOptions());
             builder.Services.AddAWSService<IAmazonS3>();
             builder.Services.AddAWSService<IAmazonRekognition>();
+            builder.Services.AddAWSService<IAmazonBedrock>();
 
             var connString = GetDatabaseConnectionString(builder.Configuration);
             builder.Services.AddDbContext<ApplicationDbContext>(option => option.UseSqlServer(connString));
