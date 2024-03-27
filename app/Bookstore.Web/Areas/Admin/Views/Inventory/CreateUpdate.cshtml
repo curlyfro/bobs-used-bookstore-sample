@@ -197,8 +197,8 @@ Keep the length of the description to less than 900 characters.`;
 
             let summary = $("#SummaryInput").text();
             summary.length === 0
-                ? $("#lblUseGenAI").text("Use GENAI to generate Summary and Cover Image")
-                : $("#lblUseGenAI").text("Use GENAI to generate Cover Image");
+                ? $("#lblUseGenAI").text("Use Amazon Bedrock to generate Summary and Cover Image")
+                : $("#lblUseGenAI").text("Use Amazon Bedrock to generate Cover Image");
 
             $("#PromptInput").text(textTemplate);
 
